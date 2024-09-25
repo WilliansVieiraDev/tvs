@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vídeos em Sequência</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      height: 100%;
+      overflow: hidden;
+    }
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="videoPlayer"></div>
+
+  <script>
+    // Lista de vídeos (adicione aqui novos vídeos)
+    const videos = [
+      '4wsKgQgygr0', // Primeiro vídeo
+      't9A8rMtfGa4'  // Segundo vídeo
+      // Adicione outros vídeos aqui conforme necessário
+    ];
+
+    // Variável para armazenar o ID do vídeo atual
+    let currentVideoId = videos[0];
+
+    // Função que carrega o próximo vídeo da lista
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.ENDED) {
+        const currentVideoIndex = videos.indexOf(currentVideoId);
+        const nextVideoIndex = (currentVideoIndex + 1) % videos.length;
+        currentVideoId = videos[nextVideoIndex];
+        player.loadVideoById(currentVideoId);
+        history.pushState(null, '', `?video=${nextVideoIndex + 1}`);
+      }
+    }
+
+    // Carrega a API do YouTube
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // Inicializa o player com o primeiro vídeo ou com o vídeo indicado na URL
+    var player;
+    function onYouTubeIframeAPIReady() {
+      const videoIndex = getVideoIndexFromUrl();
+      currentVideoId = videos[videoIndex];
+      player = new YT.Player('videoPlayer', {
+        height: '100%',
+        width: '100%',
+        videoId: currentVideoId,
+        playerVars: {
+          'autoplay': 1,
+          'mute': 1,
+          'controls': 0,
+          'rel': 0
+        },
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    // Função que verifica a URL para saber qual vídeo carregar
+    function getVideoIndexFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const videoIndex = parseInt(params.get('video'), 10) - 1;
+      return isNaN(videoIndex) || videoIndex < 0 ? 0 : videoIndex;
+    }
+
+    // Detecta alterações no histórico e recarrega o vídeo correto
+    window.onpopstate = function() {
+      const videoIndex = getVideoIndexFromUrl();
+      currentVideoId = videos[videoIndex];
+      player.loadVideoById(currentVideoId);
+    };
+  </script>
+
+</body>
+</html>
